@@ -1,52 +1,32 @@
 #include "HX711.h"
 
 #define BAUD_RATE 115200
-#define LOADCELL_DT_PIN 2
-#define LOADCELL_SCK_PIN 3
-#define CHANNEL_A 128
-#define CHANNEL_B 32
+#define DAT_PIN 2 //D2
+#define CLK_PIN 3 //D3
+#define SCALE 1000.0
 #define SAMPLING_INTERVAL_CALIBRATION 100
-#define SAMPLING_INTERVAL 5
-#define TIMEOUT_MS 10
+#define SAMPLING_INTERVAL 2
+#define TIMEOUT_MS 3
 
 HX711 loadcell;
 
-// long offset_a = 0;
-// long offset_b = 0;
-// long reading_a = 0;
-// long reading_b = 0;
-// bool channel_a = true;
-long offset = 0;
-long reading = 0;
-
 void setup() {
 	Serial.begin(BAUD_RATE);
-	loadcell.begin(LOADCELL_DT_PIN, LOADCELL_SCK_PIN);
-	// loadcell.set_gain(CHANNEL_B);
-	// offset_b = loadcell.get_units(SAMPLING_INTERVAL_CALIBRATION);
-	// loadcell.set_gain(CHANNEL_A);
-	// offset_a = loadcell.get_units(SAMPLING_INTERVAL_CALIBRATION);
-	loadcell.set_gain(CHANNEL_A);
-	offset = loadcell.get_units(SAMPLING_INTERVAL_CALIBRATION);
+	Serial.println("");
+	loadcell.begin(DAT_PIN, CLK_PIN);
+	delay(100);
+	while (!loadcell.is_ready()) {
+		delay(100);
+		Serial.println("HX711 NOT FOUND");
+	}
+	Serial.println("CALIBRATING...");
+	loadcell.set_scale(SCALE);
+	loadcell.tare(SAMPLING_INTERVAL_CALIBRATION);
 }
 
 void loop() {
-	if (loadcell.wait_ready_timeout(TIMEOUT_MS)) {
-		// if (channel_a) {
-		// 	channel_a = false;
-		// 	loadcell.set_gain(CHANNEL_A);
-		// 	reading_a = (long)loadcell.get_units(SAMPLING_INTERVAL) - offset_a;
-
-		// } else {
-		// 	channel_a = true;
-		// 	loadcell.set_gain(CHANNEL_B);
-		// 	reading_b = (long)loadcell.get_units(SAMPLING_INTERVAL) - offset_b;
-
-		// }
-		// Serial.print(reading_a);
-		// Serial.print(',');
-		// Serial.println(reading_b);
-		reading = (long)loadcell.get_units(SAMPLING_INTERVAL) - offset;
+	if (loadcell.wait_ready_timeout(TIMEOUT_MS)) { 
+		long reading = loadcell.get_units(SAMPLING_INTERVAL);
 		Serial.println(reading);
 	}
 }
