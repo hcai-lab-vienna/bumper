@@ -3,7 +3,7 @@
 #define BAUD_RATE 115200
 #define DAT_PIN 2 //D2
 #define CLK_PIN 3 //D3
-#define SCALE 1000.0
+#define SCALE 500.0
 #define SAMPLING_INTERVAL_CALIBRATION 100
 #define SAMPLING_INTERVAL 2
 #define TIMEOUT_MS 3
@@ -14,12 +14,12 @@ void setup() {
 	Serial.begin(BAUD_RATE);
 	Serial.println("");
 	loadcell.begin(DAT_PIN, CLK_PIN);
-	delay(100);
+	delay(1000);
 	while (!loadcell.is_ready()) {
-		delay(100);
 		Serial.println("HX711 NOT FOUND");
+		delay(1000);
 	}
-	Serial.println("CALIBRATING...");
+	Serial.println("CALIBRATING");
 	loadcell.set_scale(SCALE);
 	loadcell.tare(SAMPLING_INTERVAL_CALIBRATION);
 }
