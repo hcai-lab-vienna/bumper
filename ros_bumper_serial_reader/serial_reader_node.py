@@ -11,28 +11,20 @@ class SerialReaderNode(Node):
 
     def __init__(self):
         super().__init__('serial_reader_node')
-
-        # Declare parameters
         self.declare_parameter('port', '/dev/ttyUSB0')
         self.declare_parameter('baudrate', 115200)
         self.declare_parameter('threshold', 100.0)
         self.port = self.get_parameter('port').get_parameter_value().string_value
         self.baudrate = self.get_parameter('baudrate').get_parameter_value().integer_value
         self.threshold = self.get_parameter('threshold').get_parameter_value().double_value
-
-        # Create publishers
         self.raw_data_pub = self.create_publisher(String, 'raw_serial_data', 10)
         self.collision_pub = self.create_publisher(Bool, 'collision_detected', 10)
-
-        # Open serial port
         try:
             self.serial_port = serial.Serial(self.port, self.baudrate, timeout=0.1)
             self.get_logger().info(f"Opened serial port {self.port} at {self.baudrate} baud")
         except serial.SerialException as e:
             self.get_logger().error(f"Failed to open serial port: {e}")
             raise
-
-        # Create a timer to read serial data
         self.timer = self.create_timer(0.01, self.read_serial)
 
     def read_serial(self):
@@ -45,13 +37,9 @@ class SerialReaderNode(Node):
             self.get_logger().error(f"Serial read error: {e}")
 
     def process_and_publish_line(self, line):
-
-        # Publish raw data
         raw_msg = String()
         raw_msg.data = line
         self.raw_data_pub.publish(raw_msg)
-
-        # Publish collision bool
         try:
             s1, s2 = map(float, line.split(','))
             collision_msg = Bool()

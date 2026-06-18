@@ -30,6 +30,7 @@ setup(
     entry_points={
         'console_scripts': [
             'serial_reader_node = ros_bumper_serial_reader.serial_reader_node:main',
+            'collision_response_node = ros_bumper_serial_reader.collision_response_node:main',
         ],
     },
 )
