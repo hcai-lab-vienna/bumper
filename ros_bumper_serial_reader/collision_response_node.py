@@ -26,7 +26,7 @@ class CollisionResponseNode(Node):
                 self.last_collision_time = current_time
                 self.stopped = False
                 self.move_backwards()
-            elif self.stopped:
+            elif not self.stopped:
                 self.stopped = True
                 self.stop()
 
