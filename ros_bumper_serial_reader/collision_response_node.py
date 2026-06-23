@@ -15,6 +15,7 @@ class CollisionResponseNode(Node):
         self.collision_sub = self.create_subscription(Bool, '/collision_detected', self.collision_callback, 10)
         self.cmd_vel_pub = self.create_publisher(Twist, '/cmd_vel', 10)
         self.last_collision_time = self.get_clock().now()
+        self.stopped = False
 
     def collision_callback(self, msg: Bool):
         current_time = self.get_clock().now()
@@ -23,8 +24,10 @@ class CollisionResponseNode(Node):
         if time_since_last > self.backward_drive_time:
             if collision_detected:
                 self.last_collision_time = current_time
+                self.stopped = False
                 self.move_backwards()
-            else:
+            elif self.stopped:
+                self.stopped = True
                 self.stop()
 
     def move_backwards(self):
