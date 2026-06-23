@@ -46,6 +46,7 @@ class CollisionResponseNode(Node):
     def publish_stop(self):
         twist = Twist()
         self.cmd_vel_pub.publish(twist)
+        self.get_logger().info("Stop moving backwards.")
 
     def destroy_node(self):
         self.publish_stop()
