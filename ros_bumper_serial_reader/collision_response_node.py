@@ -10,7 +10,7 @@ class CollisionResponseNode(Node):
 
     def __init__(self):
         super().__init__('collision_response_node')
-        self.declare_parameter('backward_velocity', -0.2)
+        self.declare_parameter('backward_velocity', -1.0)
         self.declare_parameter('cmd_vel_topic', '/cmd_vel')
         self.declare_parameter('cooldown_period', 2.0)
         self.backward_velocity = self.get_parameter('backward_velocity').get_parameter_value().double_value
@@ -23,19 +23,15 @@ class CollisionResponseNode(Node):
             10)
         self.cmd_vel_pub = self.create_publisher(Twist, self.cmd_vel_topic, 10)
         self.last_collision_time = self.get_clock().now()
-        self.collision_detected = False
 
     def collision_callback(self, msg):
         current_time = self.get_clock().now()
-        collision_now = msg.data
-        if collision_now and not self.collision_detected:
+        collision_detected = msg.data
+        if collision_detected:
             time_since_last = (current_time - self.last_collision_time).nanoseconds / 1e9
             if time_since_last > self.cooldown_period:
                 self.last_collision_time = current_time
                 self.publish_backward()
-        elif not collision_now and self.collision_detected:
-            self.publish_stop()
-        self.collision_detected = collision_now
 
     def publish_backward(self):
         twist = Twist()
@@ -43,13 +39,7 @@ class CollisionResponseNode(Node):
         self.cmd_vel_pub.publish(twist)
         self.get_logger().info("Collision detected! Moving backwards.")
 
-    def publish_stop(self):
-        twist = Twist()
-        self.cmd_vel_pub.publish(twist)
-        self.get_logger().info("Stop moving backwards.")
-
     def destroy_node(self):
-        self.publish_stop()
         super().destroy_node()
 
 
