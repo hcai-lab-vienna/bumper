@@ -11,23 +11,21 @@ class CollisionResponseNode(Node):
     def __init__(self):
         super().__init__('collision_response_node')
         self.backward_velocity = -1.0
-        self.cooldown_period = 2.0
-        self.collision_sub = self.create_subscription(
-            Bool,
-            '/collision_detected',
-            self.collision_callback,
-            10)
+        self.backward_drive_time = 2.0
+        self.collision_sub = self.create_subscription(Bool, '/collision_detected', self.collision_callback, 10)
         self.cmd_vel_pub = self.create_publisher(Twist, '/cmd_vel', 10)
         self.last_collision_time = self.get_clock().now()
 
     def collision_callback(self, msg: Bool):
         current_time = self.get_clock().now()
+        time_since_last = (current_time - self.last_collision_time).nanoseconds / 1e9
         collision_detected = msg.data
-        if collision_detected:
-            time_since_last = (current_time - self.last_collision_time).nanoseconds / 1e9
-            if time_since_last > self.cooldown_period:
+        if time_since_last > self.backward_drive_time:
+            if collision_detected:
                 self.last_collision_time = current_time
                 self.move_backwards()
+            else:
+                self.stop()
 
     def move_backwards(self):
         msg = Twist()
@@ -35,7 +33,13 @@ class CollisionResponseNode(Node):
         self.cmd_vel_pub.publish(msg)
         self.get_logger().info("Collision detected! Moving backwards.")
 
+    def stop(self):
+        msg = Twist()
+        self.cmd_vel_pub.publish(msg)
+        self.get_logger().info("Stopped moving.")
+
     def destroy_node(self):
+        self.stop()
         super().destroy_node()
 
 
