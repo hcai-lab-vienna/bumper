@@ -42,9 +42,12 @@ class SerialReaderNode(Node):
         self.raw_data_pub.publish(raw_msg)
         try:
             s1, s2 = map(float, line.split(','))
+            condition = abs(s1) > self.threshold or abs(s2) > self.threshold
             collision_msg = Bool()
-            collision_msg.data = abs(s1) > self.threshold or abs(s2) > self.threshold
+            collision_msg.data = condition
             self.collision_pub.publish(collision_msg)
+            if condition:
+                self.get_logger().info(f"Collision detected: dms1={s1} dms2={s2} threshold={self.threshold}")
         except (ValueError, IndexError) as e:
             self.get_logger().warn(f"Failed to parse line: {line}. Error: {e}")
 
