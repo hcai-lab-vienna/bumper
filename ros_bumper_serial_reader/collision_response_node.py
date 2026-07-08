@@ -25,7 +25,7 @@ class CollisionResponseNode(Node):
 
     def collision_commands(self, segment_number) -> list[tuple]:
         "Returns motion routine for a segment when collision happens"
-        
+
         if segment_number == 1:
             a2 = 0.5 * random.choice([-1, 1])
             d2 = random.uniform(2, 6)
@@ -36,11 +36,11 @@ class CollisionResponseNode(Node):
                 (0.5, 0.0, 0.0)
             ].copy()
 
-        else: # default motion routine (drive forwards)
-            return [
-                # linear, angular, duration
-                (0.5, 0.0, 0.0)
-            ].copy()
+        # default motion routine (drive forwards)
+        return [
+            # linear, angular, duration
+            (0.5, 0.0, 0.0)
+        ].copy()
 
     def schedule_command(self):
         "Schedules commands from command_stack and waits duration for next command (recursive)."
