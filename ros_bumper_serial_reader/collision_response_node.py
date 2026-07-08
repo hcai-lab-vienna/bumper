@@ -4,7 +4,7 @@ import random
 
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import Bool
+from std_msgs.msg import Int8
 from geometry_msgs.msg import Twist
 
 
@@ -12,7 +12,7 @@ class CollisionResponseNode(Node):
 
     def __init__(self):
         super().__init__('collision_response_node')
-        self.create_subscription(Bool, '/collision_detected', self.collision_callback, 10)
+        self.create_subscription(Int8, '/collision_detected', self.collision_callback, 10)
         self.cmd_vel = self.create_publisher(Twist, '/cmd_vel', 10)
         # current motion
         self.linear, self.angular, self.duration = (0.5, 0.0, 0.0)
@@ -24,15 +24,19 @@ class CollisionResponseNode(Node):
         self.command_timer.cancel()
 
     @property
-    def collision_commands(self) -> list[tuple]:
+    def collision_commands(self) -> list[list[tuple]]:
         "motion routine when collision happens"
         a2 = 0.5 * random.choice([-1, 1])
         d2 = random.uniform(2, 6)
         return [
-            # linear, angular, duration
-            (-0.5, 0.0, 1.5),
-            (0.0, a2, d2),
-            (0.5, 0.0, 0.0),
+            [# linear, angular, duration
+                (0.5, 0.0, 0.0)
+            ],
+            [# linear, angular, duration
+                (-0.5, 0.0, 1.5),
+                (0.0, a2, d2),
+                (0.5, 0.0, 0.0),
+            ]
         ].copy()
 
     def schedule_command(self):
@@ -44,13 +48,16 @@ class CollisionResponseNode(Node):
             if self.duration:
                 self.command_timer = self.create_timer(self.duration, self.schedule_command)
 
-    def collision_callback(self, msg: Bool):
+    def collision_callback(self, msg: Int8):
         """
-        The topic '/collision_detected' constantly publishes False / True (no collision / collision).
+        The topic '/collision_detected' constantly publishes 0 (no collision) or segment number (collision).
         Therefore this callback is continuously executed with the frequency specified in serial_reader_node.py
         """
+        # msg.data is zero if no collision was detected,
+        # otherwise it is a positive number indicating the segment number
+        # of the segment where a collision was detected.
         if msg.data and not self.command_stack:
-            self.command_stack = self.collision_commands
+            self.command_stack = self.collision_commands[msg.data]
         if self.command_timer.is_canceled():
             self.schedule_command()
         # Always move for real robots, simulations don't need it.

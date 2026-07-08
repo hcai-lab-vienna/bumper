@@ -4,7 +4,7 @@ import serial
 
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import Bool
+from std_msgs.msg import Int8
 
 
 class SerialReaderNode(Node):
@@ -12,10 +12,15 @@ class SerialReaderNode(Node):
     def __init__(self):
         super().__init__('serial_reader_node')
         self.declare_parameter('port', '/dev/ttyUSB0')
-        self.declare_parameter('threshold', 100.0)
         self.port = self.get_parameter('port').get_parameter_value().string_value
+        self.declare_parameter('segment_number', 1)
+        self.segment_number = self.get_parameter('segment_number').get_parameter_value().integer_value
+        if self.segment_number < 1:
+            self.segment_number = 1
+            self.get_logger().warn(f"Segment number set to 1 (default) as it was 0 or less for: {self.port}")
+        self.declare_parameter('threshold', 100.0)
         self.threshold = self.get_parameter('threshold').get_parameter_value().double_value
-        self.collision_pub = self.create_publisher(Bool, 'collision_detected', 10)
+        self.collision_pub = self.create_publisher(Int8, 'collision_detected', 10)
         try:
             self.serial_port = serial.Serial(self.port, baudrate=115200, timeout=0.1)
             self.get_logger().info(f"Opened serial port {self.port}")
@@ -37,11 +42,11 @@ class SerialReaderNode(Node):
         try:
             s1, s2 = map(float, line.split(','))
             condition = abs(s1) > self.threshold or abs(s2) > self.threshold
-            msg = Bool()
-            msg.data = condition
+            msg = Int8()
+            msg.data = self.segment_number if condition else 0
             self.collision_pub.publish(msg)
             if condition:
-                self.get_logger().info(f"Collision detected: {s1:7.1f} {s2:7.1f}  threshold={self.threshold}")
+                self.get_logger().info(f"Collision detected in segment {self.segment_number:2d}: {s1:7.1f} {s2:7.1f}  threshold={self.threshold}")
         except (ValueError, IndexError) as e:
             self.get_logger().warn(f"Failed to parse line: {line}. Error: {e}")
 
