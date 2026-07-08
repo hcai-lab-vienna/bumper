@@ -23,21 +23,24 @@ class CollisionResponseNode(Node):
         self.command_timer = self.create_timer(0, lambda: None)
         self.command_timer.cancel()
 
-    @property
-    def collision_commands(self) -> list[list[tuple]]:
-        "motion routine when collision happens"
-        a2 = 0.5 * random.choice([-1, 1])
-        d2 = random.uniform(2, 6)
-        return [
-            [# linear, angular, duration
-                (0.5, 0.0, 0.0)
-            ],
-            [# linear, angular, duration
+    def collision_commands(self, segment_number) -> list[tuple]:
+        "Returns motion routine for a segment when collision happens"
+        
+        if segment_number == 1:
+            a2 = 0.5 * random.choice([-1, 1])
+            d2 = random.uniform(2, 6)
+            return [
+                # linear, angular, duration
                 (-0.5, 0.0, 1.5),
                 (0.0, a2, d2),
-                (0.5, 0.0, 0.0),
-            ]
-        ].copy()
+                (0.5, 0.0, 0.0)
+            ].copy()
+
+        else: # default motion routine (drive forwards)
+            return [
+                # linear, angular, duration
+                (0.5, 0.0, 0.0)
+            ].copy()
 
     def schedule_command(self):
         "Schedules commands from command_stack and waits duration for next command (recursive)."
@@ -57,7 +60,7 @@ class CollisionResponseNode(Node):
         # otherwise it is a positive number indicating the segment number
         # of the segment where a collision was detected.
         if msg.data and not self.command_stack:
-            self.command_stack = self.collision_commands[msg.data]
+            self.command_stack = self.collision_commands(msg.data)
         if self.command_timer.is_canceled():
             self.schedule_command()
         # Always move for real robots, simulations don't need it.
