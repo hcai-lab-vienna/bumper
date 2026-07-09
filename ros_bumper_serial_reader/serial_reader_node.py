@@ -16,8 +16,9 @@ class SerialReaderNode(Node):
         self.declare_parameter('segment_number', 1)
         self.segment_number = self.get_parameter('segment_number').get_parameter_value().integer_value
         if self.segment_number < 1:
-            self.segment_number = 1
-            self.get_logger().warn(f"Segment number set to 1 (default) as it was 0 or less for: {self.port}")
+            e = ValueError(f"Segment number must be greater than 0, got {self.segment_number}")
+            self.get_logger().error(f"Failed to set segment number: {e}")
+            raise e
         self.declare_parameter('threshold', 100.0)
         self.threshold = self.get_parameter('threshold').get_parameter_value().double_value
         self.collision_pub = self.create_publisher(Int8, 'collision_detected', 10)
@@ -26,7 +27,7 @@ class SerialReaderNode(Node):
             self.get_logger().info(f"Opened serial port {self.port}")
         except serial.SerialException as e:
             self.get_logger().error(f"Failed to open serial port: {e}")
-            raise
+            raise e
         self.timer = self.create_timer(0.01, self.read_serial)
 
     def read_serial(self):
