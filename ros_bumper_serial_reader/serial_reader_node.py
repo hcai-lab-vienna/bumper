@@ -4,7 +4,7 @@ import serial
 
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import Int8, Float64MultiArray, Float64
+from std_msgs.msg import Int8, Float64MultiArray
 
 
 class SerialReaderNode(Node):
