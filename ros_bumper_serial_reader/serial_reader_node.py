@@ -4,30 +4,41 @@ import serial
 
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import Int8
+from std_msgs.msg import Int8, Float64MultiArray, Float64
 
 
 class SerialReaderNode(Node):
 
     def __init__(self):
         super().__init__('serial_reader_node')
+
         self.declare_parameter('port', '/dev/ttyUSB0')
         self.port = self.get_parameter('port').get_parameter_value().string_value
+
         self.declare_parameter('segment_number', 1)
         self.segment_number = self.get_parameter('segment_number').get_parameter_value().integer_value
         if self.segment_number < 1:
             e = ValueError(f"Segment number must be greater than 0, got {self.segment_number}")
             self.get_logger().error(f"Failed to set segment number: {e}")
             raise e
+
         self.declare_parameter('threshold', 100.0)
         self.threshold = self.get_parameter('threshold').get_parameter_value().double_value
+
         self.collision_pub = self.create_publisher(Int8, 'collision_detected', 10)
+
+        self.declare_parameter('publish_raw', True)
+        self.publish_raw = self.get_parameter('publish_raw').get_parameter_value().bool_value
+        if self.publish_raw:
+            self.raw_bumper_data_pub = self.create_publisher(Float64MultiArray, 'raw_bumper_data', 10)
+
         try:
             self.serial_port = serial.Serial(self.port, baudrate=115200, timeout=0.1)
             self.get_logger().info(f"Opened serial port {self.port}")
         except serial.SerialException as e:
             self.get_logger().error(f"Failed to open serial port: {e}")
             raise e
+
         self.timer = self.create_timer(0.01, self.read_serial)
 
     def read_serial(self):
@@ -47,7 +58,11 @@ class SerialReaderNode(Node):
             msg.data = self.segment_number if condition else 0
             self.collision_pub.publish(msg)
             if condition:
-                self.get_logger().info(f"Collision detected in segment {self.segment_number:2d}: {s1:7.1f} {s2:7.1f}  threshold={self.threshold}")
+                self.get_logger().info(f"Collision detected in segment {self.segment_number}: {s1:7.1f} {s2:7.1f}  threshold={self.threshold}")
+            if self.publish_raw:
+                msg = Float64MultiArray()
+                msg.data = [s1, s2]
+                self.raw_bumper_data_pub.publish(msg)
         except (ValueError, IndexError) as e:
             self.get_logger().warn(f"Failed to parse line: {line}. Error: {e}")
 
