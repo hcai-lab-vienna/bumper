@@ -4,7 +4,7 @@ package_name = 'ros_bumper_serial_reader'
 
 setup(
     name=package_name,
-    version='0.0.0',
+    version='0.2.0',
     packages=find_packages(exclude=['test']),
     data_files=[
         ('share/ament_index/resource_index/packages',
@@ -20,13 +20,9 @@ setup(
     zip_safe=True,
     maintainer='bernhard',
     maintainer_email='bernhard-hoerl@gmx.at',
-    description='TODO: Package description',
+    description='Publishes tension data from bumper.',
     license='Apache License 2.0',
-    extras_require={
-        'test': [
-            'pytest',
-        ],
-    },
+    extras_require={},
     entry_points={
         'console_scripts': [
             'serial_reader_node = ros_bumper_serial_reader.serial_reader_node:main',
